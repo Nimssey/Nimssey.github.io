@@ -24,7 +24,7 @@ const PLAY_SVG = '<svg width="14" height="14" viewBox="0 0 24 24"><path fill="cu
 
 // ---------- profile ----------
 function renderProfile() {
-  document.title = `${CONFIG.name} — ${CONFIG.role}`;
+  document.title = CONFIG.name;
   $("name").textContent = CONFIG.name;
   $("navName").textContent = CONFIG.name;
 
