@@ -28,7 +28,7 @@ function renderProfile() {
   $("name").textContent = CONFIG.name;
   $("navName").textContent = CONFIG.name;
 
-  $("navBadge").innerHTML = CONFIG.verified ? VERIFIED_SVG : "";
+
   const nr = $("navRoblox");
   if (CONFIG.links.roblox) { nr.href = CONFIG.links.roblox; nr.innerHTML = ICONS.roblox; } else nr.remove();
   const nd = $("navDiscord");
