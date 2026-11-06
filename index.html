@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+  <div class="bg"><span class="orb o1"></span><div class="dots"></div><div class="noise"></div></div>
+
+  <nav class="nav" id="nav">
+    <a href="#top" class="brand"><span id="navName"></span><span id="navBadge"></span></a>
+    <div class="nav-live mono"><i class="dot"></i><span id="navLive">—</span>&nbsp;playing now</div>
+    <div class="nav-right">
+      <a class="icon-btn" id="navRoblox" target="_blank" rel="noopener" title="Roblox profile"></a>
+      <a class="btn btn-discord sm" id="navDiscord" target="_blank" rel="noopener"></a>
+    </div>
+  </nav>
+
+  <header id="top" class="hero">
+    <div class="avatar-wrap">
+      <div class="avatar-ring"></div>
+      <div class="avatar-clip"><img id="photo" class="avatar" alt="Profile photo" draggable="false"></div>
+    </div>
+    <h1 class="name"><span id="name"></span><span id="badge"></span></h1>
+    <p class="role" id="role"></p>
+    <div class="socials" id="socials"></div>
+  </header>
+
+  <section id="stats" class="section">
+    <div class="sec-head"><h2>Stats</h2><p>Real-time numbers across all my experiences, pulled straight from Roblox.</p></div>
+    <div class="totals">
+      <div class="glass total"><span class="t-lbl mono">TOTAL_VISITS</span><span class="t-val" id="tVisits">—</span></div>
+      <div class="glass total"><span class="t-lbl mono">PLAYING_NOW</span><span class="t-val" id="tPlaying"><i class="dot"></i>—</span></div>
+      <div class="glass total"><span class="t-lbl mono">FAVORITES</span><span class="t-val" id="tFavs">—</span></div>
+      <div class="glass total"><span class="t-lbl mono">EXPERIENCES</span><span class="t-val" id="tGames">—</span></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="experiences" class="section">
+    <div class="sec-head"><h2>Experiences</h2><p>Games I've built and worked on.</p></div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <footer id="contact" class="footer">
+    <p class="small mono">© <span id="year"></span> Nimssey</p>
+  </footer>
+
+  <script src="config.js?v=3"></script>
+  <script src="script.js?v=3"></script>
+</body>
+</html>
