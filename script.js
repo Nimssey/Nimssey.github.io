@@ -60,14 +60,15 @@ function skeletonCard() {
     <div class="stats">${'<div class="stat skeleton" style="height:52px"></div>'.repeat(3)}</div></article>`;
 }
 
-function cardHTML(g) {
+function cardHTML(g, pending) {
+  const v = (n) => (pending ? "—" : fmt(n));
   return `<article class="card glass">
     <img class="card-icon" src="${g.icon || ""}" alt="${g.name}" loading="lazy" onerror="this.removeAttribute('src')">
     <div class="card-head"><span class="mono">${g.role || ""}</span><h3>${g.name}</h3></div>
     <div class="stats">
-      <div class="stat"><b>${fmt(g.visits)}</b><small>Visits</small></div>
-      <div class="stat"><b><i class="dot"></i>${fmt(g.playing)}</b><small>CCU</small></div>
-      <div class="stat"><b>${fmt(g.favorites)}</b><small>Favorites</small></div>
+      <div class="stat"><b>${v(g.visits)}</b><small>Visits</small></div>
+      <div class="stat"><b><i class="dot"></i>${v(g.playing)}</b><small>CCU</small></div>
+      <div class="stat"><b>${v(g.favorites)}</b><small>Favorites</small></div>
     </div>
     <a class="btn play" href="https://www.roblox.com/games/${g.placeId}" target="_blank" rel="noopener">${PLAY_SVG} Play</a>
   </article>`;
@@ -133,7 +134,7 @@ function animateCount(el, value, withDot) {
 const byPlaying = (a, b) => (b.playing || 0) - (a.playing || 0);
 
 function updateLive(games) {
-  $("cards").innerHTML = games.map(cardHTML).join("");
+  $("cards").innerHTML = games.map((g) => cardHTML(g)).join("");
   $("cards").querySelectorAll(".card").forEach((c) => c.classList.add("show"));
   const sum = (k) => games.reduce((a, g) => a + (g[k] || 0), 0);
   $("tVisits").textContent = fmt(sum("visits"));
@@ -151,12 +152,12 @@ async function renderExperiences() {
   const cards = $("cards");
   cards.innerHTML = CONFIG.experiences.map(skeletonCard).join("");
   await loadSnapshot();
-  const hasSnap = Object.keys(snapshot).length > 0;
-  const games = hasSnap
-    ? CONFIG.experiences.map(fromSnapshot).sort(byPlaying)
-    : (await Promise.all(CONFIG.experiences.map(loadGame))).sort(byPlaying);
-  cards.innerHTML = games.map(cardHTML).join("");
-  if (hasSnap) setTimeout(refreshLive, 1500); // then try fresher live data
+  // show cards (name/icon) with "—" numbers until the live refresh finishes
+  if (Object.keys(snapshot).length > 0) {
+    cards.innerHTML = CONFIG.experiences.map(fromSnapshot).map((g) => cardHTML(g, true)).join("");
+  }
+  const games = (await Promise.all(CONFIG.experiences.map(loadGame))).sort(byPlaying);
+  cards.innerHTML = games.map((g) => cardHTML(g)).join("");
 
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {
     if (e.isIntersecting) { e.target.classList.add("show"); io.unobserve(e.target); }
