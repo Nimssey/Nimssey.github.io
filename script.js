@@ -65,9 +65,9 @@ function cardHTML(g) {
     <img class="card-icon" src="${g.icon || ""}" alt="${g.name}" loading="lazy" onerror="this.removeAttribute('src')">
     <div class="card-head"><span class="mono">${g.role || ""}</span><h3>${g.name}</h3></div>
     <div class="stats">
-      <div class="stat"><b>${fmt(g.favorites)}</b><small>★ Favorites</small></div>
       <div class="stat"><b>${fmt(g.visits)}</b><small>Visits</small></div>
-      <div class="stat"><b><i class="dot"></i>${fmt(g.playing)}</b><small>Playing now</small></div>
+      <div class="stat"><b><i class="dot"></i>${fmt(g.playing)}</b><small>CCU</small></div>
+      <div class="stat"><b>${fmt(g.favorites)}</b><small>Favorites</small></div>
     </div>
     <a class="btn play" href="https://www.roblox.com/games/${g.placeId}" target="_blank" rel="noopener">${PLAY_SVG} Play</a>
   </article>`;
@@ -98,13 +98,15 @@ async function loadGame(exp) {
       getJSON(`https://games.${API}/v1/games/${universeId}/favorites/count`).catch(() => ({})),
       getJSON(`https://thumbnails.${API}/v1/games/icons?universeIds=${universeId}&size=512x512&format=Png`).catch(() => ({ data: [] })),
     ]);
-    const d = info.data?.[0] || {};
+    const d = info.data?.[0];
+    if (!d) throw new Error("empty response");
+    // never let a partial/rate-limited live response wipe out cached numbers
     const g = {
       ...base,
       name: base.name || d.sourceName || d.name,
-      visits: d.visits,
-      playing: d.playing,
-      favorites: favs.favoritesCount ?? d.favoritedCount,
+      visits: d.visits ?? base.visits,
+      playing: d.playing ?? base.playing,
+      favorites: favs.favoritesCount ?? d.favoritedCount ?? base.favorites,
       icon: icon.data?.[0]?.imageUrl || base.icon,
     };
     try { localStorage.setItem("g" + exp.placeId, JSON.stringify(g)); } catch {}
