@@ -74,13 +74,23 @@ function cardHTML(g) {
 }
 
 async function getJSON(url) {
-  const r = await fetch(url);
+  const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!r.ok) throw new Error(r.status);
   return r.json();
 }
 
+// data.json is refreshed every ~15 min by a GitHub Action (same origin, always loads).
+let snapshot = {};
+async function loadSnapshot() {
+  try { snapshot = (await (await fetch("data.json?t=" + Date.now())).json()).games || {}; } catch {}
+}
+const fromSnapshot = (exp) => {
+  const s = snapshot[exp.placeId];
+  return s ? { ...exp, ...exp.fallback, ...s, name: exp.fallback?.name || s.name } : { ...exp, ...exp.fallback };
+};
+
 async function loadGame(exp) {
-  const base = { ...exp, ...exp.fallback };
+  const base = fromSnapshot(exp);
   try {
     const { universeId } = await getJSON(`https://apis.${API}/universes/v1/places/${exp.placeId}/universe`);
     const [info, favs, icon] = await Promise.all([
@@ -101,6 +111,7 @@ async function loadGame(exp) {
     return g;
   } catch (e) {
     console.warn("Live data unavailable for", exp.placeId, e);
+    if (snapshot[exp.placeId]) return base;
     try { const c = JSON.parse(localStorage.getItem("g" + exp.placeId)); if (c) return { ...c, ...exp }; } catch {}
     return base;
   }
@@ -117,11 +128,33 @@ function animateCount(el, value, withDot) {
   requestAnimationFrame(step);
 }
 
+const byPlaying = (a, b) => (b.playing || 0) - (a.playing || 0);
+
+function updateLive(games) {
+  $("cards").innerHTML = games.map(cardHTML).join("");
+  $("cards").querySelectorAll(".card").forEach((c) => c.classList.add("show"));
+  const sum = (k) => games.reduce((a, g) => a + (g[k] || 0), 0);
+  $("tVisits").textContent = fmt(sum("visits"));
+  $("tFavs").textContent = fmt(sum("favorites"));
+  $("tPlaying").innerHTML = '<i class="dot"></i>' + fmt(sum("playing"));
+  $("navLive").textContent = fmt(sum("playing"));
+}
+
+async function refreshLive() {
+  const games = (await Promise.all(CONFIG.experiences.map(loadGame))).sort(byPlaying);
+  updateLive(games);
+}
+
 async function renderExperiences() {
   const cards = $("cards");
   cards.innerHTML = CONFIG.experiences.map(skeletonCard).join("");
-  const games = (await Promise.all(CONFIG.experiences.map(loadGame))).sort((a, b) => (b.playing || 0) - (a.playing || 0));
+  await loadSnapshot();
+  const hasSnap = Object.keys(snapshot).length > 0;
+  const games = hasSnap
+    ? CONFIG.experiences.map(fromSnapshot).sort(byPlaying)
+    : (await Promise.all(CONFIG.experiences.map(loadGame))).sort(byPlaying);
   cards.innerHTML = games.map(cardHTML).join("");
+  if (hasSnap) setTimeout(refreshLive, 1500); // then try fresher live data
 
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {
     if (e.isIntersecting) { e.target.classList.add("show"); io.unobserve(e.target); }
@@ -149,14 +182,7 @@ const secObs = new IntersectionObserver((entries) => entries.forEach((e) => {
 }), { rootMargin: "-45% 0px -50% 0px" });
 ["experiences", "stats"].forEach((id) => secObs.observe($(id)));
 // refresh live players every 60s
-setInterval(async () => {
-  const games = (await Promise.all(CONFIG.experiences.map(loadGame))).sort((a, b) => (b.playing || 0) - (a.playing || 0));
-  $("cards").innerHTML = games.map(cardHTML).join("");
-  $("cards").querySelectorAll(".card").forEach((c) => c.classList.add("show"));
-  const live = fmt(games.reduce((a, g) => a + (g.playing || 0), 0));
-  $("tPlaying").innerHTML = '<i class="dot"></i>' + live;
-  $("navLive").textContent = live;
-}, 60000);
+setInterval(async () => { await loadSnapshot(); refreshLive(); }, 60000);
 
 // discourage saving the profile photo (right-click / drag / long-press)
 document.querySelectorAll(".avatar-wrap").forEach((el) => {
