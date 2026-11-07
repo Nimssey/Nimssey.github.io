@@ -1,26 +1,26 @@
 {
-  "updated": "2026-11-07T03:13:56.193Z",
+  "updated": "2026-11-07T10:25:15.763Z",
   "games": {
     "125977609033603": {
       "name": "🐧 Evolve & Survive!",
-      "visits": 7309659,
-      "playing": 24,
-      "favorites": 211883,
+      "visits": 7310919,
+      "playing": 32,
+      "favorites": 211934,
       "icon": "https://tr.rbxcdn.com/180DAY-9c743eef8774b039bd32d0878fd014b2/512/512/Image/Png/noFilter"
     },
     "118829143845477": {
       "name": "Break and Steal Spooky Eggs",
-      "visits": 33154,
-      "playing": 72,
-      "favorites": 2274,
+      "visits": 35993,
+      "playing": 57,
+      "favorites": 2521,
       "icon": "https://tr.rbxcdn.com/180DAY-1eeb46793de801061a91b719d6a73a2a/512/512/Image/Png/noFilter"
     },
     "84622560457958": {
       "name": "Throw Food For Spooky Animals",
-      "visits": 59493,
-      "playing": 345,
-      "favorites": 3854,
-      "icon": "https://tr.rbxcdn.com/180DAY-112e1ec29913213836a7eafce11a5f37/512/512/UnreviewedImage/Png/noFilter"
+      "visits": 71599,
+      "playing": 318,
+      "favorites": 4647,
+      "icon": "https://tr.rbxcdn.com/180DAY-4c7d3f9e50fb78d2d3c7e2bd16e99acf/512/512/Image/Png/noFilter"
     }
   }
 }
