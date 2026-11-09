@@ -1,5 +1,6 @@
-// roproxy.com mirrors the Roblox APIs with CORS enabled, so it works from GitHub Pages.
-const API = "roproxy.com";
+// Roblox APIs have no CORS, so we go through public mirrors. roproxy.com is often
+// rate-limited (429), so rotunnel.com is tried first and roproxy is the backup.
+const PROXIES = ["rotunnel.com", "roproxy.com"];
 const $ = (id) => document.getElementById(id);
 
 const fmt = (n) => {
@@ -74,16 +75,34 @@ function cardHTML(g, pending) {
   </article>`;
 }
 
+// Always bypass browser/HTTP caches: unique query param + no-store.
 async function getJSON(url) {
-  const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  const fresh = url + (url.includes("?") ? "&" : "?") + "_=" + Date.now() + Math.random().toString(36).slice(2, 7);
+  const r = await fetch(fresh, { cache: "no-store", signal: AbortSignal.timeout(5000) });
   if (!r.ok) throw new Error(r.status);
   return r.json();
+}
+// try each proxy in order until one answers
+async function api(sub, path) {
+  let err;
+  for (const p of PROXIES) {
+    try { return await getJSON(`https://${sub}.${p}${path}`); } catch (e) { err = e; }
+  }
+  throw err;
+}
+// placeId -> universeId never changes, so remember it (one less request per refresh)
+async function universeOf(placeId) {
+  const k = "u" + placeId;
+  try { const c = localStorage.getItem(k); if (c) return +c; } catch {}
+  const { universeId } = await api("apis", `/universes/v1/places/${placeId}/universe`);
+  try { localStorage.setItem(k, universeId); } catch {}
+  return universeId;
 }
 
 // data.json is refreshed every ~15 min by a GitHub Action (same origin, always loads).
 let snapshot = {};
 async function loadSnapshot() {
-  try { snapshot = (await (await fetch("data.json?t=" + Date.now())).json()).games || {}; } catch {}
+  try { snapshot = (await (await fetch("data.json?t=" + Date.now(), { cache: "no-store" })).json()).games || {}; } catch {}
 }
 const fromSnapshot = (exp) => {
   const s = snapshot[exp.placeId];
@@ -93,11 +112,11 @@ const fromSnapshot = (exp) => {
 async function loadGame(exp) {
   const base = fromSnapshot(exp);
   try {
-    const { universeId } = await getJSON(`https://apis.${API}/universes/v1/places/${exp.placeId}/universe`);
+    const universeId = await universeOf(exp.placeId);
     const [info, favs, icon] = await Promise.all([
-      getJSON(`https://games.${API}/v1/games?universeIds=${universeId}`),
-      getJSON(`https://games.${API}/v1/games/${universeId}/favorites/count`).catch(() => ({})),
-      getJSON(`https://thumbnails.${API}/v1/games/icons?universeIds=${universeId}&size=512x512&format=Png`).catch(() => ({ data: [] })),
+      api("games", `/v1/games?universeIds=${universeId}`),
+      api("games", `/v1/games/${universeId}/favorites/count`).catch(() => ({})),
+      api("thumbnails", `/v1/games/icons?universeIds=${universeId}&size=512x512&format=Png`).catch(() => ({ data: [] })),
     ]);
     const d = info.data?.[0];
     if (!d) throw new Error("empty response");
